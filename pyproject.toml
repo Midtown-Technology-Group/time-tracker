@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "time-tracker"
+version = "0.1.0"
+description = "Track time on tasks with zero friction. Integrates with GTD workflows."
+readme = "README.md"
+license = {text = "AGPL-3.0"}
+requires-python = ">=3.10"
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "pydantic>=2.0.0",
+    "platformdirs>=4.0.0",
+]
+
+[project.optional-dependencies]
+graph = ["msgraph-sdk>=1.0.0", "azure-identity>=1.15.0"]
+
+[project.scripts]
+time-tracker = "time_tracker.cli:main"
+tt = "time_tracker.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/time_tracker"]

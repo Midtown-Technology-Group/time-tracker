@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tracker | Midtown Technology Group</title>
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --bg-card: #161b22;
+            --border: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --accent-hover: #79c0ff;
+            --success: #3fb950;
+            --warning: #d29922;
+            --danger: #f85149;
+            --cyan: #56d4dd;
+        }
+
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo::before {
+            content: "⏱️";
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-left: 24px;
+            font-size: 14px;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .hero {
+            text-align: center;
+            padding: 80px 0 60px;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 600;
+            margin: 0 0 16px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero h1 span {
+            color: var(--accent);
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .badges {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .install-section {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 60px 0;
+        }
+
+        .install-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #000;
+        }
+
+        .code-block {
+            background: #010409;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            color: var(--text-primary);
+        }
+
+        .command { color: var(--accent); }
+        .arg { color: var(--cyan); }
+        .string { color: var(--success); }
+        .comment { color: var(--text-secondary); }
+
+        .features {
+            padding: 80px 0;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 32px;
+            margin: 0 0 60px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+        }
+
+        .feature-card h3 {
+            margin: 0 0 12px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feature-card p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .demo-section {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            padding: 80px 0;
+        }
+
+        .demo-section h2 {
+            text-align: center;
+            font-size: 32px;
+            margin: 0 0 40px;
+        }
+
+        .terminal {
+            background: #010409;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            max-width: 800px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: #161b22;
+            padding: 12px 16px;
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot-red { background: var(--danger); }
+        .dot-yellow { background: var(--warning); }
+        .dot-green { background: var(--success); }
+
+        .terminal-body {
+            padding: 20px 24px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .prompt { color: var(--accent); }
+        .output { color: var(--text-secondary); }
+        .highlight { color: var(--success); }
+        .timer { color: var(--cyan); font-weight: bold; }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 40px 0;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 36px; }
+            .hero p { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a href="/" class="logo">Time Tracker</a>
+            <div class="nav-links">
+                <a href="https://github.com/Midtown-Technology-Group/time-tracker">GitHub</a>
+                <a href="#features">Features</a>
+                <a href="#demo">Demo</a>
+            </div>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Track time with <span>zero friction</span></h1>
+            <p>Keyboard-first CLI time tracking for MSP workflows. No web apps, no complex setups—just instant commands that keep you in flow.</p>
+            <div class="badges">
+                <span class="badge">Python 3.10+</span>
+                <span class="badge">PowerShell</span>
+                <span class="badge">AGPL-3.0</span>
+                <span class="badge">JSONL Storage</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="install-section">
+        <div class="container">
+            <div class="install-tabs">
+                <button class="tab active">pip install</button>
+                <button class="tab">From source</button>
+            </div>
+            <div class="code-block">
+                <pre><code><span class="comment"># Install from PyPI</span>
+<span class="command">pip</span> <span class="arg">install</span> time-tracker
+
+<span class="comment"># Or run directly with PowerShell wrapper</span>
+<span class="command">git</span> <span class="arg">clone</span> <span class="string">"https://github.com/Midtown-Technology-Group/time-tracker.git"</span>
+<span class="command">cd</span> time-tracker
+.\<span class="command">invoke</span>.ps1 <span class="arg">--help</span></code></pre>
+            </div>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="container">
+            <h2>Built for how MSPs actually work</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>⚡ Instant Start</h3>
+                    <p>Start tracking with a single command. No project setup, no clicking through menus—just type and go.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⏸️ Pause & Resume</h3>
+                    <p>Interrupted by a call? Pause tracking, handle it, resume exactly where you left off.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>💰 Billable Tracking</h3>
+                    <p>Mark time as billable, set hourly rates, and see value add up in real-time.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📊 Daily & Weekly Views</h3>
+                    <p>See where your time went with quick summaries. Visual bars make patterns obvious.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📁 JSONL Storage</h3>
+                    <p>Human-readable, append-only format. Easy to backup, sync, or analyze with any tool.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🔧 PowerShell Native</h3>
+                    <p>Works seamlessly in your existing MSP scripts and automation workflows.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="demo-section" id="demo">
+        <div class="container">
+            <h2>See it in action</h2>
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="dot dot-red"></div>
+                    <div class="dot dot-yellow"></div>
+                    <div class="dot dot-green"></div>
+                    <span style="margin-left: 10px; color: var(--text-secondary); font-size: 12px;">PowerShell</span>
+                </div>
+                <div class="terminal-body">
+                    <div><span class="prompt">$</span> <span class="highlight">tt</span> start <span class="string">"Server maintenance"</span> -c <span class="string">"Client Work"</span> -b</div>
+                    <div class="output">▶ Started: Server maintenance (Client Work) $</div>
+                    <div><span class="prompt">$</span> <span class="highlight">tt</span> status</div>
+                    <div class="output">
+┌─ Server maintenance [▶ RUNNING] ─┐<br>
+│ <span class="timer">01:23:45</span>                        │<br>
+└──────────────────────────────────┘
+                    </div>
+                    <div><span class="prompt">$</span> <span class="highlight">tt</span> stop</div>
+                    <div class="output">⏹ Stopped: Server maintenance<br>   Duration: 02:15:30</div>
+                    <div><span class="prompt">$</span> <span class="highlight">tt</span> today</div>
+                    <div class="output">Total: 6h 45m | Billable: 4h 30m (67%)</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>Built by <a href="https://midtowntg.com">Midtown Technology Group</a> | Open source under AGPL-3.0</p>
+            <p style="margin-top: 10px; font-size: 12px;">
+                <a href="https://github.com/Midtown-Technology-Group/time-tracker">GitHub</a> •
+                <a href="https://midtowntg.com">Website</a> •
+                Part of the <a href="/toys.dev/">MSP Tools</a> collection
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
