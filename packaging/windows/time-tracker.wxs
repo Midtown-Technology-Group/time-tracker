@@ -1,0 +1,41 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="Time Tracker"
+    Manufacturer="Midtown Technology Group LLC"
+    Version="$(var.Version)"
+    UpgradeCode="{BCC9794F-07AB-5275-94D6-D6F1E6C0651B}"
+    InstallerVersion="500"
+    Scope="perMachine">
+
+    <SummaryInformation Description="Time Tracker installer" Manufacturer="Midtown Technology Group LLC" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Time Tracker is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLROOT" Name="Midtown Technology Group">
+        <Directory Id="INSTALLFOLDER" Name="Time Tracker" />
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="Time Tracker" Level="1">
+      <ComponentGroupRef Id="ToolComponents" />
+    </Feature>
+
+    <ComponentGroup Id="ToolComponents" Directory="INSTALLFOLDER">
+      <Component Id="ToolExecutableComponent" Guid="*">
+        <File Id="ToolExecutable" Source="$(var.BinDir)\time-tracker.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="PathComponent" Guid="{A59B418E-CDB8-5C35-AD56-A8960DA72301}">
+        <CreateFolder />
+        <Environment
+          Id="ToolPathEntry"
+          Action="set"
+          Name="PATH"
+          Part="last"
+          Permanent="no"
+          System="yes"
+          Value="[INSTALLFOLDER]" />
+      </Component>
+    </ComponentGroup>
+  </Package>
+</Wix>
