@@ -23,7 +23,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: MTG-Thomas/tickgit@v0.0.17
+      - uses: MTG-Thomas/tickgit@71263fb8507e1b6b84dbb24e5919c83201f5d0b7 # v0.0.17
         with:
           baseline-file: .github/tickgit-baseline.csv
           fail-on-new: "true"
