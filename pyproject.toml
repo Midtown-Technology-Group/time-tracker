@@ -17,6 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dev = ["tzdata>=2024.1"]
 graph = ["msgraph-sdk>=1.0.0", "azure-identity>=1.15.0"]
 
 [project.scripts]

@@ -144,6 +144,22 @@ $ tt export backup.json --format json -s 2025-01-01
 # Full structured data for custom processing
 ```
 
+## Development tests
+
+Create and activate a virtual environment with Python 3.10 or newer, then run:
+
+```text
+python -m pip install -e ".[dev]"
+python -m unittest discover -s tests -v
+```
+
+The test-only `dev` extra installs `tzdata` so the daylight-saving regression
+tests also work on Windows and systems without an IANA timezone database.
+Runtime dependencies are unchanged. To verify the packaged timezone data fallback,
+set `PYTHONTZPATH` to an empty string before running the tests. In PowerShell use
+`$env:PYTHONTZPATH = ''`. On Linux or macOS run
+`PYTHONTZPATH='' python -m unittest discover -s tests -v`.
+
 ## License
 
 AGPL-3.0 - Open source, always.
