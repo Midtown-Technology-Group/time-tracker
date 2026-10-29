@@ -1,5 +1,5 @@
 """Data models for time tracking."""
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field
@@ -29,10 +29,14 @@ class TimeEntry(BaseModel):
     @property
     def duration_seconds(self) -> int:
         """Calculate total duration in seconds."""
-        if self.end_time:
-            elapsed = (self.end_time - self.start_time).total_seconds()
-        else:
-            elapsed = (datetime.now() - self.start_time).total_seconds()
+        start = self.start_time
+        end = self.end_time or datetime.now(start.tzinfo)
+        # UTC subtraction measures elapsed time even across a repeated DST hour.
+        # Keep historical naive timestamps on their original wall-clock basis.
+        if start.utcoffset() is not None and end.utcoffset() is not None:
+            start = start.astimezone(timezone.utc)
+            end = end.astimezone(timezone.utc)
+        elapsed = (end - start).total_seconds()
         return int(elapsed - self.paused_duration)
     
     @property

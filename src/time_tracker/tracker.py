@@ -187,41 +187,25 @@ class TimeTracker:
         """
         duration = duration.strip().lower()
         total_seconds = 0
-        
-        # Try HH:MM:SS format
-        if ":" in duration:
-            parts = duration.split(":")
-            if len(parts) == 2:
-                hours, minutes = int(parts[0]), int(parts[1])
-                total_seconds = hours * 3600 + minutes * 60
-            elif len(parts) == 3:
-                hours, minutes, seconds = int(parts[0]), int(parts[1]), int(parts[2])
-                total_seconds = hours * 3600 + minutes * 60 + seconds
-            return total_seconds
-        
-        # Try decimal hours (1.5h)
-        if "h" in duration and "." in duration.split("h")[0]:
-            match = re.match(r"(\d+\.?\d*)h", duration)
-            if match:
-                hours = float(match.group(1))
-                return int(hours * 3600)
-        
-        # Try combined format (2h30m)
-        h_match = re.search(r"(\d+)h", duration)
-        m_match = re.search(r"(\d+)m", duration)
-        
-        if h_match:
-            total_seconds += int(h_match.group(1)) * 3600
-        if m_match:
-            total_seconds += int(m_match.group(1)) * 60
-        
-        # If just a number, assume minutes
-        if total_seconds == 0 and duration.isdigit():
+
+        clock = re.fullmatch(r"([0-9]+):([0-5]?[0-9])(?::([0-5]?[0-9]))?", duration)
+        decimal = re.fullmatch(r"([0-9]+\.[0-9]+)h", duration)
+        units = re.fullmatch(r"(?:([0-9]+)h)?(?:([0-9]+)m)?", duration)
+        if clock:
+            hours, minutes, seconds = clock.groups()
+            total_seconds = int(hours) * 3600 + int(minutes) * 60 + int(seconds or 0)
+        elif decimal:
+            # Decimal avoids rounding a valid duration up or down via binary floats.
+            from decimal import Decimal
+            total_seconds = int(Decimal(decimal.group(1)) * 3600)
+        elif units and any(units.groups()):
+            hours, minutes = units.groups()
+            total_seconds = int(hours or 0) * 3600 + int(minutes or 0) * 60
+        elif re.fullmatch(r"[0-9]+", duration):
             total_seconds = int(duration) * 60
-        
-        if total_seconds == 0:
-            raise ValueError(f"Could not parse duration: {duration}")
-        
+
+        if total_seconds <= 0:
+            raise ValueError(f"Could not parse positive duration: {duration}")
         return total_seconds
     
     def archive_old(self, days: int = 90) -> int:
