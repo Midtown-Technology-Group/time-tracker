@@ -1,6 +1,7 @@
 """Local storage for time tracking data."""
 import json
 import os
+import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
@@ -76,10 +77,22 @@ class TimeStore:
         return result
     
     def _rewrite_entries(self, entries: list[TimeEntry]) -> None:
-        """Rewrite all entries to file."""
-        with open(self.entries_file, "w", encoding="utf-8") as f:
-            for entry in entries:
-                f.write(entry.model_dump_json() + "\n")
+        """Replace entries only after the complete new file is written safely."""
+        temporary_path = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=self.data_dir,
+                prefix=".entries-", suffix=".tmp", delete=False,
+            ) as f:
+                temporary_path = Path(f.name)
+                for entry in entries:
+                    f.write(entry.model_dump_json() + "\n")
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temporary_path, self.entries_file)
+        finally:
+            if temporary_path is not None:
+                temporary_path.unlink(missing_ok=True)
     
     def get_daily_summary(self, date: Optional[str] = None) -> DailySummary:
         """Generate summary for a day."""
