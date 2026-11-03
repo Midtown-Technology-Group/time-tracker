@@ -9,3 +9,12 @@ Use synthetic entries and an isolated temporary data directory for development c
 `pyproject.toml` declares Hatchling packaging and optional Graph dependencies, but no development test extra or configured test gate. Do not invent a pytest requirement. Inspect existing tests and workflow checks for the affected change; document a focused synthetic behavior check and the absence of an established gate when applicable. The README's `./invoke.ps1 --help` is the documented source entry-point smoke check; use it only in an isolated editable-checkout environment and confirm the imported `time_tracker` module resolves to this checkout. A successful wrapper call against an installed package does not verify source edits.
 
 Windows MSI packaging/release is driven by `.github/workflows/release-msi.yml`; a source edit does not authorize publishing or installing it. Graph integration also requires the intended account, scopes, and action authorization. Keep customer names, work notes, rates, and exported timesheets out of committed fixtures and logs. Report verified source behavior separately from released binaries or live business records.
+
+## Secret gate before publication
+
+Before every push and PR creation/update, commit the complete candidate and run
+`python3 scripts/secret_gate.py` (native Windows: `python`). Require exit 0;
+missing tooling/authentication, scan errors and skipped scans block publication.
+Then run the existing repository gates. Repeat after changing outgoing commits.
+See [secret scanning](SECRET-SCANNING.md) for base selection, new branches,
+pre-push input and prerequisites. Preserve GitGuardian App, CI and Gitleaks checks.
