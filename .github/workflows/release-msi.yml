@@ -21,16 +21,20 @@ jobs:
       - name: Set package version
         id: version
         shell: pwsh
+        env:
+          WORKFLOW_EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          if ("${{ github.event_name }}" -eq "release") {
-            $tag = "${{ github.event.release.tag_name }}"
+          if ($env:WORKFLOW_EVENT_NAME -eq "release") {
+            $tag = $env:RELEASE_TAG
             if (-not $tag.StartsWith("v")) {
               throw "Release tags must use the vX.Y.Z format so installer URLs match release assets."
             }
             $version = $tag.TrimStart("v")
             "tag=$tag" >> $env:GITHUB_OUTPUT
           } else {
-            $version = "${{ inputs.version }}"
+            $version = $env:INPUT_VERSION
             "tag=v$version" >> $env:GITHUB_OUTPUT
           }
           "value=$version" >> $env:GITHUB_OUTPUT
@@ -57,7 +61,9 @@ jobs:
 
       - name: Build MSI
         shell: pwsh
-        run: ./packaging/windows/build-msi.ps1 -Version "${{ steps.version.outputs.value }}"
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.value }}
+        run: ./packaging/windows/build-msi.ps1 -Version $env:PACKAGE_VERSION
 
       - name: Get MSI metadata
         id: msi
@@ -71,9 +77,10 @@ jobs:
       - name: Upload MSI to release
         if: github.event_name == 'release'
         shell: pwsh
-        run: gh release upload "${{ github.event.release.tag_name }}" dist/time-tracker.msi --clobber
+        run: gh release upload $env:RELEASE_TAG dist/time-tracker.msi --clobber
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
 
       - name: Upload workflow artifact
         if: github.event_name != 'release'
@@ -87,11 +94,15 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.MTG_WINGET_DISPATCH_TOKEN }}
+          PACKAGE_VERSION: ${{ steps.version.outputs.value }}
+          PACKAGE_TAG: ${{ steps.version.outputs.tag }}
+          MSI_SHA256: ${{ steps.msi.outputs.sha256 }}
+          MSI_PRODUCT_CODE: ${{ steps.msi.outputs.product_code }}
         run: |
-          $version = "${{ steps.version.outputs.value }}"
-          $tag = "${{ steps.version.outputs.tag }}"
-          $sha = "${{ steps.msi.outputs.sha256 }}"
-          $productCode = "${{ steps.msi.outputs.product_code }}"
+          $version = $env:PACKAGE_VERSION
+          $tag = $env:PACKAGE_TAG
+          $sha = $env:MSI_SHA256
+          $productCode = $env:MSI_PRODUCT_CODE
           if ([string]::IsNullOrWhiteSpace($env:GH_TOKEN)) {
             Write-Warning "MTG_WINGET_DISPATCH_TOKEN is not configured; skipping mtg-winget dispatch."
             exit 0
