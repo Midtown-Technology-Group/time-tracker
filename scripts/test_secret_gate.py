@@ -3,6 +3,7 @@
 import contextlib
 import importlib.util
 import io
+import json
 import os
 import shlex
 import shutil
@@ -837,8 +838,14 @@ class SecretGateTests(unittest.TestCase):
                     physical = Path(owned) / "physical"
                     physical.mkdir()
                     alias = Path(owned) / "alias"
-                    alias.symlink_to(physical, target_is_directory=True)
-                    yield str(alias)
+                    try:
+                        alias.symlink_to(physical, target_is_directory=True)
+                    except OSError:
+                        # Core SDK scenarios still run; the separate cleanup
+                        # regression requires and verifies a real owned alias.
+                        yield owned
+                    else:
+                        yield str(alias)
 
         def scanner_cli(command, **kwargs):
             """Intercept only the scanner; keep real Git and production arguments."""
@@ -905,6 +912,92 @@ class SecretGateTests(unittest.TestCase):
         messages = [content for content in seen if content.startswith("Commit: ")]
         self.assertEqual(len(messages), 0 if scenario == "skip" else count)
         self.assertNotIn("synthetic-secret-marker", captured.getvalue())
+
+    def test_temp_root_retarget_cannot_leave_message_files(self):
+        """Physical receipts stay valid and cleanup survives an alias retarget."""
+        physical = self.root / "physical-temp"
+        other = self.root / "replacement-temp"
+        alias = self.root / "temporary-alias"
+        physical.mkdir()
+        other.mkdir()
+
+        def link(target):
+            """Create an owned local alias without requiring Windows symlink rights."""
+            if os.name == "nt":
+                command = str(Path(os.environ["SystemRoot"]) / "System32" / "cmd.exe")
+                result = subprocess.run(
+                    [command, "/d", "/c", "mklink", "/J", str(alias), str(target)],
+                    capture_output=True,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0)
+            else:
+                alias.symlink_to(target, target_is_directory=True)
+
+        link(physical)
+        native_run = subprocess.run
+        receipts = []
+
+        def scanner(command, **kwargs):
+            """Return physical paths, then move only the caller-owned temp alias."""
+            if command[0] != "fixture-cleanup":
+                return native_run(command, **kwargs)
+            if command[1:] == ["--version"]:
+                return subprocess.CompletedProcess(
+                    command, 0, "ggshield, version 1.56.1"
+                )
+            if "path" not in command:
+                return subprocess.CompletedProcess(command, 0)
+            files = list((Path(kwargs["cwd"]) / command[-1]).glob("*.txt"))
+            self.assertTrue(files)
+            entries = []
+            for document in files:
+                name = str(document.resolve(strict=True))
+                receipts.append(name)
+                entries.append(
+                    {
+                        "filename": name,
+                        "mode": "FILE",
+                        "incidents": [],
+                        "total_incidents": 0,
+                        "total_occurrences": 0,
+                    }
+                )
+            if os.name == "nt":
+                alias.rmdir()
+            else:
+                alias.unlink()
+            link(other)
+            report = {
+                "type": "path_scan",
+                "entities_with_incidents": entries,
+                "total_incidents": 0,
+                "total_occurrences": 0,
+            }
+            return subprocess.CompletedProcess(
+                command, 0, json.dumps(report).encode("utf-8")
+            )
+
+        previous = Path.cwd()
+        try:
+            os.chdir(self.repo)
+            with (
+                patch.dict(os.environ, self.env, clear=True),
+                patch("secret_gate.tempfile.gettempdir", return_value=str(alias)),
+                patch("secret_gate.subprocess.run", side_effect=scanner),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                self.assertEqual(
+                    secret_gate.scan(
+                        [(self.base + ".." + self.head, 1)], "fixture-cleanup"
+                    ),
+                    0,
+                )
+        finally:
+            os.chdir(previous)
+        self.assertEqual(len(receipts), 1)
+        self.assertEqual(list(physical.iterdir()), [])
+        self.assertEqual(list(other.iterdir()), [])
 
     @unittest.skipUnless(
         importlib.util.find_spec("ggshield"), "Install approved ggshield"
