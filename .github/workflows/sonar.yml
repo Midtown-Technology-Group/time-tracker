@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install pinned coverage tool
-        run: 'python -m pip install --only-binary :all: coverage==7.10.7'
+        run: 'python -m pip install --only-binary :all: coverage==7.10.7 ggshield==1.56.1'
       - name: Measure real gate and test subprocess coverage
         run: |
           mkdir -p build/secret-gate-coverage
