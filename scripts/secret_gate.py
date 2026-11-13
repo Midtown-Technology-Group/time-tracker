@@ -435,9 +435,14 @@ def write_messages(revision, count, directory):
             raise GateError(
                 20, "BASE_ERROR: oversized commit metadata; publication blocked."
             )
-        _, separator, message = git("cat-file", "commit", sha, strip=False).partition(
-            "\n\n"
-        )
+        headers, separator, message = git(
+            "cat-file", "commit", sha, strip=False
+        ).partition("\n\n")
+        if any(line.startswith("mergetag ") for line in headers.split("\n")):
+            raise GateError(
+                20,
+                "BASE_ERROR: merged tag annotations are unsupported; publication blocked.",
+            )
         serialized = ("Commit: " + sha + "\n\n" + message).encode("utf-8")
         if not separator or "\x00" in message or len(serialized) > 64 * 1024:
             raise GateError(

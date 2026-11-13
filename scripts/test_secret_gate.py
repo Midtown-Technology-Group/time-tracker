@@ -260,6 +260,52 @@ class SecretGateTests(unittest.TestCase):
         self.assertNotIn("synthetic-secret-marker", result.stdout + result.stderr)
         self.assertTrue(Path(str(self.calls) + ".messages").exists())
 
+    def test_merged_tag_annotation_blocks_before_scanning(self):
+        """An embedded tag annotation must not disappear with commit headers."""
+        tree = self.git("rev-parse", "HEAD^{tree}")
+        raw = (
+            f"tree {tree}\nparent {self.head}\nparent {self.base}\n"
+            "author Fixture <fixture@example.invalid> 1700000000 +0000\n"
+            "committer Fixture <fixture@example.invalid> 1700000000 +0000\n"
+            f"mergetag object {self.head}\n type commit\n tag fixture\n"
+            " tagger Fixture <fixture@example.invalid> 1700000000 +0000\n"
+            " \n synthetic-secret-marker\n\nfixture merge\n"
+        ).encode("ascii")
+        head = (
+            subprocess.check_output(
+                ["git", "hash-object", "-t", "commit", "-w", "--stdin"],
+                cwd=self.repo,
+                env=self.env,
+                input=raw,
+                stderr=subprocess.DEVNULL,
+            )
+            .decode("ascii")
+            .strip()
+        )
+        self.git("update-ref", "HEAD", head)
+        result = self.run_gate("--base", self.base)
+        self.assertEqual(result.returncode, 20, result.stderr)
+        self.assertIn("merged tag annotations", result.stderr)
+        self.assertNotIn("CLEAN:", result.stdout + result.stderr)
+        self.assertNotIn("synthetic-secret-marker", result.stdout + result.stderr)
+        self.assertFalse(self.calls.exists())
+        self.assertFalse(Path(str(self.calls) + ".messages").exists())
+
+    def test_mergetag_text_in_message_still_reaches_scanner(self):
+        """Only actual headers block; message text still receives a real scan."""
+        self.git(
+            "commit",
+            "--allow-empty",
+            "--no-gpg-sign",
+            "-q",
+            "-m",
+            "mergetag synthetic-secret-marker",
+        )
+        result = self.run_gate("--base", self.base)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertNotIn("synthetic-secret-marker", result.stdout + result.stderr)
+        self.assertTrue(Path(str(self.calls) + ".messages").exists())
+
     def test_utf8_commit_message_survives_cp1252_default(self):
         """Preserve UTF-8 message bytes when subprocess defaults to Windows cp1252."""
         message = "fixture \U0001f601"
