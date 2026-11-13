@@ -46,6 +46,9 @@ commits; it can cost more API quota. Multiple updates and lightweight commit tag
 blocked with exit 20 because commit-range scanning does not cover annotation
 text. Rerunning this gate still exits 20, even after an external annotation scan.
 This gate does not offer a bypass. Unknown tips and non-commit tags block. Deletes have no content.
+Outgoing commits with an embedded `mergetag` header also block with exit 20
+in every mode: its tag annotation is outside the scanned file patches and
+commit message. An external annotation scan does not bypass this rejection.
 No hooks or Git configuration are installed automatically; compose existing hooks
 rather than replacing them. Agent instructions require the gate even without hooks.
 
